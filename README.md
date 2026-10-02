@@ -8,7 +8,7 @@ Synastria's changes for [InstanceGPS](https://github.com/iExpulsion/InstanceGPS)
 2. Download `InstanceGPS_Synastria-<version>.zip` from the [latest release](../../releases/latest) and extract it into `World of Warcraft\Interface\AddOns`, next to the `InstanceGPS` folder.
 3. Restart the game. The InstanceGPS options panel title reads "InstanceGPS ... + Synastria".
 
-## What's changed
+## What's Changed
 
 Nothing yet: as far as we know, InstanceGPS's AzerothCore routes fit Synastria as they are. If you find a place where they don't, see below.
 
