@@ -1,0 +1,8 @@
+## Interface: 30300
+## Title: InstanceGPS: Synastria
+## Notes: Synastria's changes to InstanceGPS's AzerothCore data.
+## Author: Expulsion
+## Version: 1.0.0
+## Dependencies: InstanceGPS
+
+Overrides.lua
