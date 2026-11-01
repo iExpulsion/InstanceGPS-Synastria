@@ -37,6 +37,11 @@ SAME = 1          # yards: Synastria's truncated coordinates against a stock spa
 CUSTOM_IDS = 80000
 EPIC = 4          # item quality: a creature that drops one is boss-like, not an add
 
+# Leads already checked in game, left out of the report: creature ID -> what it turned out to be
+CHECKED = {
+    80020: "Lord Jaraxxus: a player's summoned guardian, not a boss (Naxxramas, 2026-11-01)",
+}
+
 
 def rows(*path):
     with open(os.path.join(SYN, "data", *path), encoding="utf8") as f:
@@ -145,7 +150,7 @@ def main():
     for cid, pts in spawns.items():
         c = creatures.get(cid)
         new = cid not in stock_ids if stock_ids is not None else cid >= CUSTOM_IDS
-        if c and new and cid not in boss_npcs and epics[cid] > 0:
+        if c and new and cid not in boss_npcs and cid not in CHECKED and epics[cid] > 0:
             for m, sx, sy in pts:
                 if m in instances.keys():
                     custom[m].append((cid, c["name"], sx, sy, drops[cid], epics[cid]))
