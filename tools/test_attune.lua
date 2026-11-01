@@ -108,6 +108,22 @@ local count = #fetches
 DN:Fire("INSTANCE_CHANGED", inst)
 MOCK.Tick(0.2)
 print("fetched once:", #fetches == count and Has(Note().right, "2"))
+-- the server reports the normal zone first and the heroic one a moment later: the rows follow it
+local HEROIC = 12346
+TRACKER[603] = { 0, 0, 36612, "Lord Marrowgar", 20 }
+local s = ItemLocGetSourcesCompacted
+function ItemLocGetSourcesCompacted(item, a, b, c, d, e, z, g)
+	if z == HEROIC then return item == 603 and 0 or nil, 0, 36612, "Lord Marrowgar", 20 end
+	return s(item, a, b, c, d, e, z, g)
+end
+OWN = HEROIC
+MOCK.Tick(1.1)
+MOCK.Tick(0.1)
+print("follows a zone change:", Has(Note().right, "1") and DN.trackerNotes["attune trash"] == nil)
+OWN = 12345
+MOCK.Tick(1.1)
+MOCK.Tick(0.1)
+
 -- /igpssyn reports what's counted
 local said = {}
 local print_ = DN.Print

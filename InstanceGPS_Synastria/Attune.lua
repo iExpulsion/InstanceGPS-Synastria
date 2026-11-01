@@ -222,13 +222,22 @@ local function Update()
 	DN:SetTrackerNote(TRASH_NOTE, trashNote)
 end
 
--- fetched a frame after entering (and retried each second until the database has loaded);
--- recounted every 30 s and on kills, since attuning goes on as you play
+-- Fetched a frame after entering (and retried each second until the database has loaded);
+-- recounted every 30 s and on kills, since attuning goes on as you play. The server can report
+-- the zone before the difficulty is set (normal first, then heroic), so like its own tracker,
+-- this looks again each second and starts over when the zone has changed.
 local RECOUNT = 30
 local f = CreateFrame("Frame")
-local wait = 0
+local wait, zoneCheck = 0, 0
 f:SetScript("OnUpdate", function(_, elapsed)
-	wait = wait - elapsed
+	wait, zoneCheck = wait - elapsed, zoneCheck - elapsed
+	if zoneCheck <= 0 and items and Custom_GetCurrentZoneOur and ItemLocGetSourcesCompacted then
+		zoneCheck = 1
+		local now = Custom_GetCurrentZoneOur()
+		if now and now > 0 and now ~= zone then
+			pending, wait = true, 0
+		end
+	end
 	if wait <= 0 and (pending or items) then
 		local inst = DN.inst
 		if pending and inst and ns.LootLoaded() then
