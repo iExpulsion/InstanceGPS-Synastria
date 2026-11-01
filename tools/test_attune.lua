@@ -5,9 +5,17 @@
 local DN = NS.DN
 local ICC = 631
 
--- 501 drops from Marrowgar's 25 heroic version, 502 from a trash mob, 503 is already attuned
-local ZONES = { [ICC + 0x8000 + 8 * 1024] = { 501, 502, 503 }, [ICC + 0x8000 + 5 * 1024] = { 777 } }
-local SOURCES = { [501] = { { 0, 0, 37959 } }, [502] = { { 0, 0, 99 } }, [503] = { { 0, 0, 36612 } }, [777] = { { 0, 0, 36612 } } }
+-- 501 drops from Marrowgar's 25 heroic version, 502 from a trash mob, 503 is already attuned,
+-- 504 from a mob in another zone first and a trash mob here second
+local ZONES = { [ICC + 0x8000 + 8 * 1024] = { 501, 502, 503, 504 }, [ICC + 0x8000 + 5 * 1024] = { 777 } }
+local HERE = "Icecrown Citadel 25H"
+local SOURCES = {
+	[501] = { { 0, 0, 37959, 20, 200, "Lord Marrowgar (3)", HERE } },
+	[502] = { { 0, 0, 99, 5, 50, "Deathbound Ward", HERE } },
+	[503] = { { 0, 0, 36612, 20, 200, "Lord Marrowgar", HERE } },
+	[504] = { { 0, 0, 555, 50, 500, "World Mob", "Elwynn Forest" }, { 0, 0, 98, 3, 30, "Frostwarden Handler", HERE } },
+	[777] = { { 0, 0, 36612, 20, 200, "Lord Marrowgar", HERE } },
+}
 local loaded, attuned, fetches = false, { [503] = true }, {}
 function ItemLocIsLoaded() return loaded or nil end
 function ItemLocGetObjCount() return 0 end
@@ -40,21 +48,29 @@ loaded = true
 MOCK.Tick(1.2)
 local n = Note()
 print("25H zone built from the difficulty:", fetches[1] == ICC + 0x8000 + 8 * 1024 and #fetches == 1)
-print("row counts what's left:", n ~= nil and Has(n.text, "Left to Attune") and Has(n.right, "2"))
+print("row counts what's left:", n ~= nil and Has(n.text, "Left to Attune") and Has(n.right, "3"))
 
 -- the tooltip groups by boss (difficulty versions count as the boss), then the rest
 n.tooltip(tip)
 local t = table.concat(lines, "\n")
-local boss, rest = t:find("Lord Marrowgar | 1", 1, true), t:find("Trash, Chests and Others | 1", 1, true)
+local boss, rest = t:find("Lord Marrowgar | 1", 1, true), t:find("Trash, Chests and Others | 2", 1, true)
 print("grouped by boss:", boss ~= nil and rest ~= nil and boss < rest and Has(t, "Item501") and not Has(t, "Item503"))
+
+-- the trash row names the mobs that drop them, with their chances; the instance's own source wins
+local trash = DN.trackerNotes["attune trash"]
+lines = {}
+if trash then trash.tooltip(tip) end
+t = table.concat(lines, "\n")
+print("trash row:", trash ~= nil and Has(trash.right, "2") and Has(t, "Deathbound Ward | 1") and Has(t, "Item502|r | 5.0%")
+	and Has(t, "Frostwarden Handler") and not Has(t, "World Mob") and not Has(t, "Lord Marrowgar"))
 
 -- attuning an item lowers the count at the next recount (a kill, or every 30 s)
 attuned[501] = true
 DN:Fire("BOSS_KILLED")
-print("recounted:", Has(Note().right, "1"))
-attuned[502] = true
+print("recounted:", Has(Note().right, "2"))
+attuned[502], attuned[504] = true, true
 MOCK.Tick(31)
-print("all done:", Has(Note().right, "none"))
+print("all done:", Has(Note().right, "none") and DN.trackerNotes["attune trash"] == nil)
 
 -- the server's own zone for this instance wins, and each zone is fetched once per session
 function Custom_GetCurrentZoneOur() return ICC + 0x8000 + 5 * 1024 end

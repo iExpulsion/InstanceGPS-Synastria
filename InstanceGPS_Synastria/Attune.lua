@@ -1,13 +1,15 @@
--- A "Left to Attune" row under InstanceGPS's boss list: how many items from this instance and
--- difficulty this character can still attune, and in its tooltip where they drop, boss by boss.
+-- Two rows under InstanceGPS's boss list: "Left to Attune", how many items from this instance and
+-- difficulty this character can still attune (its tooltip lists them boss by boss), and "Trash
+-- Drops", the trash creatures here that drop them (its tooltip lists each one's items and chances).
 -- The item list comes from Synastria's loot database, the way its own Item Hunt frame finds it.
 local _, ns = ...
 local DN = InstanceGPS
 
-local NOTE = "attune"
+local NOTE, TRASH_NOTE = "attune", "attune trash"   -- tracker rows, in this order
 local INSTANCE_ZONE = 0x8000
 local MYTHIC_DIFF = 9
 local MAX_PER_GROUP = 6
+local MAX_TRASH, MAX_PER_TRASH = 8, 4
 
 local zoneItems = {}          -- zone ID -> item IDs, for the session (each lookup costs ~100 ms)
 local items, zone, pending
@@ -49,17 +51,37 @@ local function BossesByNpc(inst)
 	return by
 end
 
--- the boss an item drops from here, if any
-local function Holder(item, byNpc)
-	if ItemLocGetSourcesCompacted then
-		local _, _, objId = ItemLocGetSourcesCompacted(item, 0, 0, 0, 100, 0, zone, 2)
-		return objId and byNpc[objId]
+local function IsCreature(objType)
+	return objType == 0 or objType == 20
+end
+
+-- Where an item comes from in this instance: { boss =, objType =, objId =, name =, chance = }.
+-- Looked up once per zone and item.
+local sources = {}
+local function Source(item, byNpc)
+	sources[zone or 0] = sources[zone or 0] or {}
+	local cache = sources[zone or 0]
+	if not cache[item] then
+		local s = {}
+		if ItemLocGetSourcesCompacted then
+			local _, objType, objId, name, chance = ItemLocGetSourcesCompacted(item, 0, 0, 0, 100, 0, zone, 2)
+			s = { objType = objType, objId = objId, name = name, chance = chance }
+		else
+			local here = DN.inst and DN.inst.name:lower()
+			for i = 1, ItemLocGetSourceCount(item) or 0 do
+				local _, objType, objId, chance, _, name, zoneName = ItemLocGetSourceAt(item, i)
+				local row = { objType = objType, objId = objId, name = name, chance = chance }
+				local boss = IsCreature(objType) and byNpc[objId]
+				local inZone = here and zoneName and zoneName:lower():sub(1, #here) == here
+				if boss or (inZone and not s.objId) then s = row end
+				if boss then break end
+			end
+		end
+		cache[item] = s
 	end
-	for i = 1, ItemLocGetSourceCount(item) or 0 do
-		local _, objType, objId = ItemLocGetSourceAt(item, i)
-		local b = (objType == 0 or objType == 20) and byNpc[objId]
-		if b then return b end
-	end
+	local s = cache[item]
+	s.boss = IsCreature(s.objType) and s.objId and byNpc[s.objId] or nil
+	return s
 end
 
 local function Open()
@@ -70,17 +92,38 @@ local function Open()
 	return open
 end
 
+-- The open items by boss (false: anywhere else), and trash creatures with their open items,
+-- the creatures with the most first.
+local function Groups(inst, open)
+	local byNpc, groups, trash, byName = BossesByNpc(inst), {}, {}, {}
+	for _, item in ipairs(open) do
+		local s = Source(item, byNpc)
+		local b = s.boss or false
+		groups[b] = groups[b] or {}
+		table.insert(groups[b], item)
+		if not s.boss and IsCreature(s.objType) and s.name then
+			local t = byName[s.name]
+			if not t then
+				t = { name = s.name, items = {} }
+				byName[s.name] = t
+				trash[#trash + 1] = t
+			end
+			table.insert(t.items, { item = item, chance = s.chance or 0 })
+		end
+	end
+	table.sort(trash, function(a, b)
+		if #a.items ~= #b.items then return #a.items > #b.items end
+		return a.name < b.name
+	end)
+	return groups, trash
+end
+
 local function Tooltip(tip)
 	local inst = DN.inst
 	local open = Open()
 	tip:AddLine(("%d left to attune here"):format(#open))
 	if inst and #open > 0 then
-		local byNpc, groups = BossesByNpc(inst), {}
-		for _, item in ipairs(open) do
-			local b = Holder(item, byNpc) or false
-			groups[b] = groups[b] or {}
-			table.insert(groups[b], item)
-		end
+		local groups = Groups(inst, open)
 		local order, listed = {}, {}
 		for _, bi in ipairs((DN:ActiveRoute() or {}).order or {}) do
 			order[#order + 1], listed[inst.bosses[bi]] = inst.bosses[bi], true
@@ -101,17 +144,48 @@ local function Tooltip(tip)
 	end
 end
 
+local function TrashTooltip(tip)
+	local inst = DN.inst
+	local _, trash = Groups(inst, Open())
+	tip:AddLine("Trash worth killing here")
+	tip:AddLine("Creatures that drop items you can still attune.", 1, 1, 1, true)
+	for i = 1, math.min(#trash, MAX_TRASH) do
+		local t = trash[i]
+		tip:AddLine(" ")
+		tip:AddDoubleLine(t.name, ("%d"):format(#t.items), 1, 0.82, 0, 0.3, 1, 0.3)
+		table.sort(t.items, function(a, b) return a.chance > b.chance end)
+		for k = 1, math.min(#t.items, MAX_PER_TRASH) do
+			tip:AddDoubleLine(ns.ItemText(t.items[k].item), ns.ChanceText(t.items[k].chance), 1, 1, 1, 1, 1, 0.8)
+		end
+		if #t.items > MAX_PER_TRASH then tip:AddLine(("%d more"):format(#t.items - MAX_PER_TRASH), 0.6, 0.6, 0.6) end
+	end
+	if #trash > MAX_TRASH then
+		tip:AddLine(" ")
+		tip:AddLine(("%d more creatures"):format(#trash - MAX_TRASH), 0.6, 0.6, 0.6)
+	end
+end
+
 local function Update()
-	local note
-	if items and #items > 0 then
-		local open = #Open()
+	local note, trashNote
+	local inst = DN.inst
+	if inst and items and #items > 0 then
+		local open = Open()
+		local _, trash = Groups(inst, open)
 		note = {
 			text = "|cffaaaaaa" .. (ns.InMythic() and "Left to Attune (Mythic)" or "Left to Attune") .. "|r",
-			right = open > 0 and ("|cff33ff33%d|r"):format(open) or "|cff888888none|r",
+			right = #open > 0 and ("|cff33ff33%d|r"):format(#open) or "|cff888888none|r",
 			tooltip = Tooltip,
 		}
+		if #trash > 0 then
+			trashNote = {
+				text = "|cffaaaaaaTrash Drops|r",
+				right = ("|cff33ff33%d|r %s"):format(#trash, #trash == 1 and "mob" or "mobs"),
+				tooltip = TrashTooltip,
+			}
+		end
 	end
 	DN:SetTrackerNote(NOTE, note)
+	DN:SetTrackerNote(TRASH_NOTE, trashNote)
 end
 
 -- fetched a frame after entering (and retried each second until the database has loaded);
@@ -139,5 +213,6 @@ end)
 DN:On("INSTANCE_CHANGED", function()
 	items, zone, pending, wait = nil, nil, true, 0
 	DN:SetTrackerNote(NOTE, nil)
+	DN:SetTrackerNote(TRASH_NOTE, nil)
 end)
 DN:On("BOSS_KILLED", Update)

@@ -123,4 +123,4 @@ end)
 -- the loot database is refreshed by the server (patches, Mythic changes): look it up again per instance
 DN:On("INSTANCE_CHANGED", function() cache = {} end)
 
-ns.InMythic, ns.LootLoaded, ns.CanStillAttune, ns.ItemText = InMythic, LootLoaded, CanStillAttune, ItemText
+ns.InMythic, ns.LootLoaded, ns.CanStillAttune, ns.ItemText, ns.ChanceText = InMythic, LootLoaded, CanStillAttune, ItemText, ChanceText

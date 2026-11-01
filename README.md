@@ -12,6 +12,7 @@ Synastria's changes for [InstanceGPS](https://github.com/iExpulsion/InstanceGPS)
 
 - **Boss loot in the tooltips.** Hover a boss in the tracker, or the arrow, for that boss's drops on your current difficulty, from Synastria's own loot database: in Mythic, its Mythic drops. Items your character can still attune are listed first and marked, with a count at the end.
 - **What's left to attune here.** A "Left to Attune" row under the tracker's boss list counts the items from this instance and difficulty your character can still attune. Hover it to see them boss by boss, then the trash, chests and other sources.
+- **Trash worth killing.** A "Trash Drops" row counts the trash mobs here that drop something your character can still attune. Hover it for each mob's items and drop chances, the mobs with the most first.
 - **Routes:** nothing yet. As far as we know, InstanceGPS's AzerothCore routes fit Synastria as they are. If you find a place where they don't, see below.
 
 ## Contributing
