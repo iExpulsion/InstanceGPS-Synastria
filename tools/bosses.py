@@ -41,6 +41,7 @@ EPIC = 4          # item quality: a creature that drops one is boss-like, not an
 CHECKED = {
     80020: "Lord Jaraxxus: a player's summoned guardian, not a boss (Naxxramas, 2026-11-01)",
     28921: "Hadronox: InstanceGPS's position is right (Azjol-Nerub heroic, 2026-11-01)",
+    30258: "Amanitar: InstanceGPS's position is right (Ahn'kahet heroic, 2026-11-01)",
 }
 
 
