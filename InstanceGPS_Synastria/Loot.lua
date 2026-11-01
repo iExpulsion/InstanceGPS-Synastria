@@ -119,7 +119,7 @@ DN:On("BOSS_TOOLTIP", function(boss, tip)
 			tip:AddLine(("%d More"):format(#rows - MAX_LINES), 0.6, 0.6, 0.6)
 		end
 		if #rows == 0 then
-			tip:AddLine("No creature loot listed. The fight may drop a chest instead.", 0.6, 0.6, 0.6, true)
+			tip:AddLine("No Creature Loot", 0.6, 0.6, 0.6)
 		elseif open > 0 then
 			tip:AddLine(("%d Still to Attune"):format(open), 0.3, 1, 0.3)
 		end

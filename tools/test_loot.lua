@@ -71,7 +71,7 @@ mythicLevel = 0
 
 -- a boss with no creature loot
 boss = { name = "Chest Boss", npcs = { 99999 } }
-print("no loot note:", Has(Hover(1), "may drop a chest"))
+print("no loot note:", Has(Hover(1), "No Creature Loot"))
 
 -- before the database has loaded
 loaded = false
