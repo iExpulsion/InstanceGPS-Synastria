@@ -22,6 +22,7 @@ Under InstanceGPS in the game's options window, the Synastria page has:
 
 - **Boss Loot in Tooltips:** the loot list in boss tooltips (on).
 - **Boss Loot List:** which drops it lists: Show All (the default), Show Attunable (items your character can attune), Hide Attuned (only ones you haven't attuned yet) or Hide Owned Attunes (only what's left to farm, leaving out ones in your bags or bank).
+- **Mark Bosses With Attunes:** a green count after a boss's name in the tracker, like "Grobbulus (3)": how many of its drops you can still attune and don't have yet. Bosses you've killed this run lose theirs (on).
 - **Left to Attune Row** and **Trash Drops Row:** the two rows under the boss list (on).
 - **Routes:** nothing yet. As far as we know, InstanceGPS's AzerothCore routes fit Synastria as they are. If you find a place where they don't, see below.
 

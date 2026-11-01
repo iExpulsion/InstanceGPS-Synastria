@@ -200,11 +200,17 @@ local function TrashTooltip(tip)
 end
 
 local function Update()
-	local note, trashNote
+	local note, trashNote, marks
 	local inst = DN.inst
 	if inst and items and #items > 0 then
 		local open = Open()
-		local _, trash = Groups(inst, open)
+		local groups, trash = Groups(inst, open)
+		if ns.opt.markBosses then
+			marks = {}
+			for b, list in pairs(groups) do
+				if b and not DN:IsKilled(b) then marks[b] = ("|cff33ff33(%d)|r"):format(#list) end
+			end
+		end
 		if ns.opt.attuneRow then
 			note = {
 				text = "|cffaaaaaa" .. (ns.InMythic() and "Left to Attune (Mythic)" or "Left to Attune") .. "|r",
@@ -222,6 +228,7 @@ local function Update()
 	end
 	DN:SetTrackerNote(NOTE, note)
 	DN:SetTrackerNote(TRASH_NOTE, trashNote)
+	DN:SetBossMarks(NOTE, marks)
 end
 
 -- Fetched a frame after entering (and retried each second until the database has loaded);
@@ -259,8 +266,10 @@ DN:On("INSTANCE_CHANGED", function()
 	items, zone, pending, wait = nil, nil, true, 0
 	DN:SetTrackerNote(NOTE, nil)
 	DN:SetTrackerNote(TRASH_NOTE, nil)
+	DN:SetBossMarks(NOTE, nil)
 end)
-DN:On("BOSS_KILLED", Update)
+-- kills, and kills undone by hand (right-click), change which bosses get a mark
+DN:On("RUN_CHANGED", Update)
 DN:On("MODULE_OPTION", function(module)
 	if module == "Synastria" then Update() end
 end)

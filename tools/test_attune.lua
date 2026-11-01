@@ -66,6 +66,20 @@ t = table.concat(lines, "\n")
 print("trash row:", trash ~= nil and Has(trash.right, "2") and Has(t, "Deathbound Ward | 1") and Has(t, "Item502|r | 5.0%")
 	and Has(t, "Frostwarden Handler") and not Has(t, "World Mob") and not Has(t, "Lord Marrowgar"))
 
+-- bosses with something left to attune get a count after their name, until they're killed
+local marks = DN.bossMarks.attune
+local marrowgar = inst.bosses[1]
+local marked = marks ~= nil and marks[marrowgar] ~= nil and marks[marrowgar]:find("(1)", 1, true) ~= nil
+DN:MarkKilled(marrowgar, "manual")
+local gone = DN.bossMarks.attune[marrowgar] == nil
+DN:UnmarkKilled(marrowgar)
+print("boss marks:", marked and gone and DN.bossMarks.attune[marrowgar] ~= nil)
+DN.db.modules = { Synastria = { markBosses = false } }
+DN:Fire("MODULE_OPTION", "Synastria", "markBosses", false)
+print("marks option:", DN.bossMarks.attune == nil)
+DN.db.modules = nil
+DN:Fire("MODULE_OPTION", "Synastria", "markBosses", true)
+
 -- each row has an option of its own, which takes effect straight away
 DN.db.modules = { Synastria = { attuneRow = false } }
 DN:Fire("MODULE_OPTION", "Synastria", "attuneRow", false)
@@ -88,6 +102,7 @@ MOCK.Tick(1.1)
 -- attuning an item lowers the count at the next recount (a kill, or every 30 s)
 attuned[501] = true
 DN:Fire("BOSS_KILLED")
+DN:Fire("RUN_CHANGED")
 print("recounted:", Has(Note().right, "2"))
 attuned[502], attuned[504] = true, true
 MOCK.Tick(31)

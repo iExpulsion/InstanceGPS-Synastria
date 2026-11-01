@@ -12,6 +12,8 @@ ns.opt = InstanceGPS:ModuleOptions("Synastria", {
 		{ "unattuned", "Hide Attuned" },
 		{ "farm", "Hide Owned Attunes" },
 	  } },
+	{ key = "markBosses", label = "Mark Bosses With Attunes", default = true,
+	  tip = "After a boss's name in the tracker, how many of its drops you can still attune and don't have yet." },
 	{ key = "attuneRow", label = "Left to Attune Row", default = true,
 	  tip = "A row under the boss list counting what's left to attune in this instance." },
 	{ key = "trashRow", label = "Trash Drops Row", default = true,
