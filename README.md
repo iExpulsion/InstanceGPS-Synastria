@@ -20,6 +20,7 @@ Route and boss changes live in [`InstanceGPS_Synastria/Overrides.lua`](InstanceG
 
 - **A route that goes the wrong way:** record the right one in game with `/igps record start`, walk it (each boss kill ends a leg), then `/igps record export` and paste the result into `Overrides.lua`.
 - **A boss that's moved, renamed, added or gone, or a hint to add or fix:** edit `Overrides.lua` by hand.
+- **Leads from the client's data:** `python tools/bosses.py` compares InstanceGPS's bosses with where Synastria's client data puts them (from a SynastriaData checkout next to this repo) and lists bosses that look moved, missing or custom, with lines to paste into `Overrides.lua`. With the AzerothCore world database dump that SynastriaData's verify tool reads, it can tell a real move from a scripted boss's location. Check each lead in game first.
 
 Open a pull request saying where each change comes from (what you saw in game, a patch note). `python tools/check.py` checks the file; the same check runs on every pull request.
 

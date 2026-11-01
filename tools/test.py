@@ -1,4 +1,4 @@
-"""Run the module's Lua tests inside InstanceGPS's test harness.
+"""Run the module's tests: the Lua ones inside InstanceGPS's test harness, and tools/bosses.py's.
 
     python tools/test.py [path to an InstanceGPS checkout]
 
@@ -19,9 +19,10 @@ if not os.path.exists(HARNESS):
 toc = open(glob.glob(os.path.join(ADDON, "*.toc"))[0], encoding="utf8").read().splitlines()
 modules = os.pathsep.join(os.path.join(ADDON, l.strip()) for l in toc if l.strip() and not l.startswith("#"))
 failed = False
-for test, done in TESTS:
-    p = subprocess.run([sys.executable, HARNESS, "", os.path.join(ROOT, "tools", test)],
-                       capture_output=True, text=True, env=dict(os.environ, DN_MODULES=modules))
+for test, done in TESTS + [("test_bosses.py", "bosses test done")]:
+    path = os.path.join(ROOT, "tools", test)
+    args = [path] if test.endswith(".py") else [HARNESS, "", path]
+    p = subprocess.run([sys.executable] + args, capture_output=True, text=True, env=dict(os.environ, DN_MODULES=modules))
     out = p.stdout + p.stderr
     results = [l for l in out.splitlines() if l.endswith(("\ttrue", "\tfalse"))]
     for l in results:
