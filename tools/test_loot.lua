@@ -18,6 +18,8 @@ function GetCustomGameData(a, b) return a == 12 and b == 11 and mythicLevel or 0
 function GetItemInfoCustom(id) return "Item" .. id, nil, 4 end
 function CanAttuneItemHelper(id) return attunable[id] and 1 or 0 end
 function HasAttunedAnyVariantOfItem(id) return attuned[id] or false end
+local owned = {}
+function GetItemCount(id) return owned[id] and 1 or 0 end
 ITEM_QUALITY_COLORS = { [4] = { hex = "|cffa335ee" } }
 
 local lines
@@ -51,6 +53,12 @@ print("25H version:", Has(t, "Item121") and not Has(t, "Item101"))
 local first = t:find("Item122", 1, true)
 print("attunable first:", first ~= nil and first < t:find("Item123", 1, true) and t:find("Item123", 1, true) < t:find("Item121", 1, true)
 	and Has(t, "1 you can still attune"))
+-- one already in the bags reads "have", not "attune", and isn't counted
+owned[122] = true
+t = Hover(4)
+owned[122] = nil
+print("have not counted:", Has(t, "Item122|r | |cff888888have") and not Has(t, "Item122|r | |cff33ff33attune")
+	and not Has(t, "you can still attune"))
 
 -- 10-player heroic with no loot on its version: the normal 10-player loot
 print("10H falls back:", Has(Hover(3), "Item101"))

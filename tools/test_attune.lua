@@ -26,6 +26,8 @@ function GetCustomGameData() return 0 end
 function GetItemInfoCustom(id) return "Item" .. id, nil, 4 end
 function CanAttuneItemHelper() return 1 end
 function HasAttunedAnyVariantOfItem(id) return attuned[id] or false end
+local owned = {}
+function GetItemCount(id) return owned[id] and 1 or 0 end
 
 local lines = {}
 local tip = {
@@ -63,6 +65,15 @@ if trash then trash.tooltip(tip) end
 t = table.concat(lines, "\n")
 print("trash row:", trash ~= nil and Has(trash.right, "2") and Has(t, "Deathbound Ward | 1") and Has(t, "Item502|r | 5.0%")
 	and Has(t, "Frostwarden Handler") and not Has(t, "World Mob") and not Has(t, "Lord Marrowgar"))
+
+-- picking up a drop takes it off both rows within a second, like Synastria's own tracker
+owned[502] = true
+MOCK.Fire("BAG_UPDATE", 0)
+MOCK.Tick(1.1)
+print("picked up:", Has(Note().right, "2") and Has(DN.trackerNotes["attune trash"].right, "1"))
+owned[502] = nil
+MOCK.Fire("BAG_UPDATE", 0)
+MOCK.Tick(1.1)
 
 -- attuning an item lowers the count at the next recount (a kill, or every 30 s)
 attuned[501] = true

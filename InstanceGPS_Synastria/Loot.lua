@@ -23,6 +23,12 @@ local function CanStillAttune(item)
 		and not (HasAttunedAnyVariantOfItem and HasAttunedAnyVariantOfItem(item))
 end
 
+-- in the bags or bank already: still to attune, but nothing left to farm (Synastria's own
+-- tracker leaves these out too)
+local function Have(item)
+	return GetItemCount ~= nil and (GetItemCount(item, true) or 0) > 0
+end
+
 local function LootCount(id)
 	return ItemLocGetObjCount(0, id) or 0
 end
@@ -73,7 +79,8 @@ local function BossLoot(boss, mythic)
 	end
 	local rows = {}
 	for _, item in ipairs(order) do
-		rows[#rows + 1] = { item = item, chance = best[item], attune = CanStillAttune(item) }
+		local can, have = CanStillAttune(item), Have(item)
+		rows[#rows + 1] = { item = item, chance = best[item], attune = can and not have, have = can and have }
 	end
 	table.sort(rows, function(a, b)
 		if a.attune ~= b.attune then return a.attune end
@@ -104,6 +111,7 @@ DN:On("BOSS_TOOLTIP", function(boss, tip)
 			if i <= MAX_LINES then
 				local right = ChanceText(r.chance)
 				if r.attune then right = "|cff33ff33attune|r  " .. right end
+				if r.have then right = "|cff888888have|r  " .. right end
 				tip:AddDoubleLine(ItemText(r.item), right, 1, 1, 1, 1, 1, 0.8)
 			end
 		end
@@ -123,4 +131,5 @@ end)
 -- the loot database is refreshed by the server (patches, Mythic changes): look it up again per instance
 DN:On("INSTANCE_CHANGED", function() cache = {} end)
 
-ns.InMythic, ns.LootLoaded, ns.CanStillAttune, ns.ItemText, ns.ChanceText = InMythic, LootLoaded, CanStillAttune, ItemText, ChanceText
+ns.InMythic, ns.LootLoaded, ns.CanStillAttune, ns.Have, ns.ItemText, ns.ChanceText =
+	InMythic, LootLoaded, CanStillAttune, Have, ItemText, ChanceText

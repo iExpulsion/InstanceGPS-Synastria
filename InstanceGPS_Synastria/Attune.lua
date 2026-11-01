@@ -121,7 +121,7 @@ end
 local function Open()
 	local open = {}
 	for _, item in ipairs(items or {}) do
-		if ns.CanStillAttune(item) then open[#open + 1] = item end
+		if ns.CanStillAttune(item) and not ns.Have(item) then open[#open + 1] = item end
 	end
 	return open
 end
@@ -259,6 +259,12 @@ DN:On("INSTANCE_CHANGED", function()
 	DN:SetTrackerNote(TRASH_NOTE, nil)
 end)
 DN:On("BOSS_KILLED", Update)
+
+-- a drop picked up is no longer to farm: recount within a second
+f:RegisterEvent("BAG_UPDATE")
+f:SetScript("OnEvent", function()
+	if items and not pending then wait = math.min(wait, 1) end
+end)
 
 -- /igpssyn: what the rows are counting here, to compare with Synastria's own Item Hunt tracker
 SLASH_INSTANCEGPSSYN1 = "/igpssyn"
