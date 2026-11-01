@@ -72,12 +72,49 @@ attuned[502], attuned[504] = true, true
 MOCK.Tick(31)
 print("all done:", Has(Note().right, "none") and DN.trackerNotes["attune trash"] == nil)
 
--- the server's own zone for this instance wins, and each zone is fetched once per session
-function Custom_GetCurrentZoneOur() return ICC + 0x8000 + 5 * 1024 end
+-- With the server's zone, the list is made the way its Item Hunt tracker makes it: every item the
+-- character can still attune, kept where its best source (with the tracker's filters) is in this
+-- zone. 601 drops from Marrowgar here, 602 from a trash mob here, 603 only elsewhere.
+local OWN = 12345
+local TRACKER = { [601] = { 0, 0, 36612, "Lord Marrowgar", 20 }, [602] = { 0, 0, 97, "Ancient Skeletal Soldier", 2 } }
+local args = {}
+function Custom_GetCurrentZoneOur() return OWN end
+function GetCustomGameData(a, b)
+	return a == 37 and b == 0x10000 + 6 and 7 or a == 37 and b == 0x10000 + 27 and 0x0201 or 0
+end
+function ItemLocGetAllItemsInZone(z, char, _, _, _, have)
+	fetches[#fetches + 1] = z or "all"
+	return z == nil and char == 1 and have == -1 and { 601, 602, 603 } or ZONES[z]
+end
+function ItemLocGetSourcesCompacted(item, white, _, minChance, maxChance, _, z)
+	args = { white = white, minChance = minChance, maxChance = maxChance, zone = z }
+	local s = z == OWN and TRACKER[item]
+	if s then return 0, s[1], s[3], s[4], s[5] end
+end
 DN:Fire("INSTANCE_CHANGED", inst)
 print("row cleared on instance change:", Note() == nil)
 MOCK.Tick(0.2)
+local n = Note()
+local trash = DN.trackerNotes["attune trash"]
+print("tracker's way:", fetches[#fetches] == "all" and n ~= nil and Has(n.right, "2") and trash ~= nil and Has(trash.right, "1"))
+-- its filters come from the tracker's settings: source types, and chance limits (1-2%)
+print("tracker's filters:", args.white == 7 and args.minChance == 0 and args.maxChance == 1 and args.zone == OWN)
+lines = {}
+n.tooltip(tip)
+t = table.concat(lines, "\n")
+print("tracker's sources:", Has(t, "Lord Marrowgar | 1") and Has(t, "Trash, Chests and Others | 1") and not Has(t, "Item603"))
+-- and each zone is fetched once per session
+local count = #fetches
 DN:Fire("INSTANCE_CHANGED", inst)
 MOCK.Tick(0.2)
-print("server zone used once:", fetches[2] == ICC + 0x8000 + 5 * 1024 and #fetches == 2 and Has(Note().right, "1"))
+print("fetched once:", #fetches == count and Has(Note().right, "2"))
+-- /igpssyn reports what's counted
+local said = {}
+local print_ = DN.Print
+DN.Print = function(_, msg, ...) said[#said + 1] = msg:format(...) end
+SlashCmdList.INSTANCEGPSSYN("")
+DN.Print = print_
+local report = table.concat(said, "\n")
+print("slash report:", Has(report, "12345") and Has(report, "2 left to attune") and Has(report, "Lord Marrowgar: 1")
+	and Has(report, "from 1 trash mobs"))
 print("attune test done")

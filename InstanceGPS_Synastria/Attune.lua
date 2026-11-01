@@ -14,11 +14,40 @@ local MAX_TRASH, MAX_PER_TRASH = 8, 4
 local zoneItems = {}          -- zone ID -> item IDs, for the session (each lookup costs ~100 ms)
 local items, zone, pending
 
--- The loot database's zone for this instance: the server's own, else built from the difficulty
--- (ItemLoc difficulties: 1 normal, 2 heroic, 3/4 10/25-player, 5-8 10N/25N/10H/25H, 9 Mythic).
+local sources = {}            -- zone ID -> item ID -> where it comes from (see Source)
+
+-- The Item Hunt tracker's settings (its ReadVar): source filters, chance limits, BoE, forge
+local function Var(i)
+	return GetCustomGameData(37, 0x10000 + i) or 0
+end
+
+-- a chance limit byte: 0 unset, else the value + 1, with 0x80 meaning hundredths of a percent
+local function ChanceLimit(byte, unset)
+	local v = byte - 1
+	return byte == 0 and unset or v >= 0x80 and (v - 0x80) * 0.01 or v
+end
+
+-- The way Synastria's own Item Hunt tracker lists a zone: every item this character can still
+-- attune, kept where its best source (with the tracker's filters) is in this zone.
+local function FetchLikeTracker(z)
+	local chances = Var(27)
+	local minChance, maxChance = ChanceLimit(chances % 256, 0), ChanceLimit(math.floor(chances / 256) % 256, 100)
+	local boe = math.floor(Var(4) / 0x10000) % 2 == 1 and 1 or nil
+	local list, cache = {}, {}
+	for _, item in ipairs(ItemLocGetAllItemsInZone(nil, 1, nil, nil, nil, -1, Var(29), boe) or {}) do
+		local src, objType, objId, name, chance = ItemLocGetSourcesCompacted(item, Var(6), Var(16), minChance, maxChance, 0, z, 2)
+		if src then
+			list[#list + 1] = item
+			cache[item] = { objType = objType, objId = objId, name = name, chance = chance }
+		end
+	end
+	sources[z] = cache
+	return list
+end
+
+-- Without the tracker's zone: the loot database's zone for this instance, built from the
+-- difficulty (ItemLoc difficulties: 1 normal, 2 heroic, 3/4 10/25-player, 5-8 10N/25N/10H/25H, 9 Mythic).
 local function Zones(inst)
-	local own = Custom_GetCurrentZoneOur and Custom_GetCurrentZoneOur()
-	if own and own >= INSTANCE_ZONE then return { own } end
 	local _, itype, diffIndex = GetInstanceInfo()
 	diffIndex = diffIndex or 1
 	local diffs = ns.InMythic() and { MYTHIC_DIFF }
@@ -30,11 +59,17 @@ local function Zones(inst)
 end
 
 local function Fetch(inst)
+	local own = Custom_GetCurrentZoneOur and ItemLocGetSourcesCompacted and Custom_GetCurrentZoneOur()
 	local list, found = {}, nil
-	for _, z in ipairs(Zones(inst)) do
-		if not found then
-			zoneItems[z] = zoneItems[z] or ItemLocGetAllItemsInZone(z, 0, 0, 1, 1) or {}
-			if #zoneItems[z] > 0 then list, found = zoneItems[z], z end
+	if own and own > 0 then
+		zoneItems[own] = zoneItems[own] or FetchLikeTracker(own)
+		list, found = zoneItems[own], own
+	else
+		for _, z in ipairs(Zones(inst)) do
+			if not found then
+				zoneItems[z] = zoneItems[z] or ItemLocGetAllItemsInZone(z, 0, 0, 1, 1) or {}
+				if #zoneItems[z] > 0 then list, found = zoneItems[z], z end
+			end
 		end
 	end
 	return list, found
@@ -57,7 +92,6 @@ end
 
 -- Where an item comes from in this instance: { boss =, objType =, objId =, name =, chance = }.
 -- Looked up once per zone and item.
-local sources = {}
 local function Source(item, byNpc)
 	sources[zone or 0] = sources[zone or 0] or {}
 	local cache = sources[zone or 0]
@@ -216,3 +250,23 @@ DN:On("INSTANCE_CHANGED", function()
 	DN:SetTrackerNote(TRASH_NOTE, nil)
 end)
 DN:On("BOSS_KILLED", Update)
+
+-- /igpssyn: what the rows are counting here, to compare with Synastria's own Item Hunt tracker
+SLASH_INSTANCEGPSSYN1 = "/igpssyn"
+SlashCmdList.INSTANCEGPSSYN = function()
+	local inst = DN.inst
+	if inst and items then
+		local open = Open()
+		local groups, trash = Groups(inst, open)
+		local how = Custom_GetCurrentZoneOur and ItemLocGetSourcesCompacted and "the Item Hunt tracker's way"
+			or "the instance's zone from its difficulty"
+		DN:Print("Zone %s (%s), found %s: %d items, %d left to attune.", tostring(zone),
+			Custom_GetZoneName and tostring(Custom_GetZoneName(zone or 0)) or "?", how, #items, #open)
+		for _, b in ipairs(inst.bosses) do
+			if groups[b] then DN:Print("  %s: %d", b.name, #groups[b]) end
+		end
+		DN:Print("  Elsewhere: %d, from %d trash mobs.", #(groups[false] or {}), #trash)
+	else
+		DN:Print("Synastria: nothing counted yet (not in an instance, or the loot database hasn't loaded).")
+	end
+end
