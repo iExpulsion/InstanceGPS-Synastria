@@ -10,16 +10,19 @@ Synastria's changes for [InstanceGPS](https://github.com/iExpulsion/InstanceGPS)
 
 ## What's Changed
 
-Nothing yet: as far as we know, InstanceGPS's AzerothCore routes fit Synastria as they are. If you find a place where they don't, see below.
+- **Boss loot in the tooltips.** Hover a boss in the tracker, or the arrow, for that boss's drops on your current difficulty, from Synastria's own loot database: in Mythic, its Mythic drops. Items your character can still attune are listed first and marked, with a count at the end.
+- **Routes:** nothing yet. As far as we know, InstanceGPS's AzerothCore routes fit Synastria as they are. If you find a place where they don't, see below.
 
 ## Contributing
 
-Every change lives in [`InstanceGPS_Synastria/Overrides.lua`](InstanceGPS_Synastria/Overrides.lua). The format is in InstanceGPS's [module guide](https://github.com/iExpulsion/InstanceGPS/blob/main/docs/MODULES.md).
+Route and boss changes live in [`InstanceGPS_Synastria/Overrides.lua`](InstanceGPS_Synastria/Overrides.lua). The format is in InstanceGPS's [module guide](https://github.com/iExpulsion/InstanceGPS/blob/main/docs/MODULES.md).
 
 - **A route that goes the wrong way:** record the right one in game with `/igps record start`, walk it (each boss kill ends a leg), then `/igps record export` and paste the result into `Overrides.lua`.
 - **A boss that's moved, renamed, added or gone, or a hint to add or fix:** edit `Overrides.lua` by hand.
 
 Open a pull request saying where each change comes from (what you saw in game, a patch note). `python tools/check.py` checks the file; the same check runs on every pull request.
+
+The loot tooltip is [`Loot.lua`](InstanceGPS_Synastria/Loot.lua). It asks the game for the loot, so it stays current after server patches. The one thing the game can't tell it is which creature holds a boss's heroic or 25-player drops (Lord Marrowgar's 25 heroic loot is on "Lord Marrowgar (3)"). [`Difficulties.lua`](InstanceGPS_Synastria/Difficulties.lua) lists those creature IDs. `python tools/difficulties.py` regenerates it from a SynastriaData checkout next to this repo (extracted from the client's files) and InstanceGPS's `Data.lua`; run it after a client patch, or when InstanceGPS's bosses change. `python tools/test.py` tests `Loot.lua` with InstanceGPS's test harness (an InstanceGPS checkout next to this repo).
 
 ## Releasing
 
