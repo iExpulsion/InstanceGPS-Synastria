@@ -155,7 +155,7 @@ end
 local function Tooltip(tip)
 	local inst = DN.inst
 	local open = Open()
-	tip:AddLine(("%d left to attune here"):format(#open))
+	tip:AddLine(("%d Left to Attune Here"):format(#open))
 	if inst and #open > 0 then
 		local groups = Groups(inst, open)
 		local order, listed = {}, {}
@@ -172,7 +172,7 @@ local function Tooltip(tip)
 				tip:AddLine(" ")
 				tip:AddDoubleLine(b and b.name or "Trash, Chests and Others", ("%d"):format(#list), 1, 0.82, 0, 0.3, 1, 0.3)
 				for i = 1, math.min(#list, MAX_PER_GROUP) do tip:AddLine(ns.ItemText(list[i])) end
-				if #list > MAX_PER_GROUP then tip:AddLine(("%d more"):format(#list - MAX_PER_GROUP), 0.6, 0.6, 0.6) end
+				if #list > MAX_PER_GROUP then tip:AddLine(("%d More"):format(#list - MAX_PER_GROUP), 0.6, 0.6, 0.6) end
 			end
 		end
 	end
@@ -181,7 +181,7 @@ end
 local function TrashTooltip(tip)
 	local inst = DN.inst
 	local _, trash = Groups(inst, Open())
-	tip:AddLine("Trash worth killing here")
+	tip:AddLine("Trash Worth Killing Here")
 	tip:AddLine("Creatures that drop items you can still attune.", 1, 1, 1, true)
 	for i = 1, math.min(#trash, MAX_TRASH) do
 		local t = trash[i]
@@ -191,11 +191,11 @@ local function TrashTooltip(tip)
 		for k = 1, math.min(#t.items, MAX_PER_TRASH) do
 			tip:AddDoubleLine(ns.ItemText(t.items[k].item), ns.ChanceText(t.items[k].chance), 1, 1, 1, 1, 1, 0.8)
 		end
-		if #t.items > MAX_PER_TRASH then tip:AddLine(("%d more"):format(#t.items - MAX_PER_TRASH), 0.6, 0.6, 0.6) end
+		if #t.items > MAX_PER_TRASH then tip:AddLine(("%d More"):format(#t.items - MAX_PER_TRASH), 0.6, 0.6, 0.6) end
 	end
 	if #trash > MAX_TRASH then
 		tip:AddLine(" ")
-		tip:AddLine(("%d more creatures"):format(#trash - MAX_TRASH), 0.6, 0.6, 0.6)
+		tip:AddLine(("%d More Creatures"):format(#trash - MAX_TRASH), 0.6, 0.6, 0.6)
 	end
 end
 
@@ -207,13 +207,13 @@ local function Update()
 		local _, trash = Groups(inst, open)
 		note = {
 			text = "|cffaaaaaa" .. (ns.InMythic() and "Left to Attune (Mythic)" or "Left to Attune") .. "|r",
-			right = #open > 0 and ("|cff33ff33%d|r"):format(#open) or "|cff888888none|r",
+			right = #open > 0 and ("|cff33ff33%d|r"):format(#open) or "|cff888888None|r",
 			tooltip = Tooltip,
 		}
 		if #trash > 0 then
 			trashNote = {
 				text = "|cffaaaaaaTrash Drops|r",
-				right = ("|cff33ff33%d|r %s"):format(#trash, #trash == 1 and "mob" or "mobs"),
+				right = ("|cff33ff33%d|r %s"):format(#trash, #trash == 1 and "Mob" or "Mobs"),
 				tooltip = TrashTooltip,
 			}
 		end

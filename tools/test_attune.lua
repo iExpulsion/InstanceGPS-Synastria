@@ -81,7 +81,7 @@ DN:Fire("BOSS_KILLED")
 print("recounted:", Has(Note().right, "2"))
 attuned[502], attuned[504] = true, true
 MOCK.Tick(31)
-print("all done:", Has(Note().right, "none") and DN.trackerNotes["attune trash"] == nil)
+print("all done:", Has(Note().right, "None") and DN.trackerNotes["attune trash"] == nil)
 
 -- With the server's zone, the list is made the way its Item Hunt tracker makes it: every item the
 -- character can still attune, kept where its best source (with the tracker's filters) is in this

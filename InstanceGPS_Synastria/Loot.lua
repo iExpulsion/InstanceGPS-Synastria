@@ -92,7 +92,7 @@ end
 local function ItemText(item)
 	local name, _, quality = GetItemInfoCustom(item)
 	local color = quality and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
-	return (color and color.hex or "|cffffffff") .. (name or ("item " .. item)) .. "|r"
+	return (color and color.hex or "|cffffffff") .. (name or ("Item " .. item)) .. "|r"
 end
 
 local function ChanceText(chance)
@@ -110,18 +110,18 @@ DN:On("BOSS_TOOLTIP", function(boss, tip)
 			if r.attune then open = open + 1 end
 			if i <= MAX_LINES then
 				local right = ChanceText(r.chance)
-				if r.attune then right = "|cff33ff33attune|r  " .. right end
-				if r.have then right = "|cff888888have|r  " .. right end
+				if r.attune then right = "|cff33ff33Attune|r  " .. right end
+				if r.have then right = "|cff888888Have|r  " .. right end
 				tip:AddDoubleLine(ItemText(r.item), right, 1, 1, 1, 1, 1, 0.8)
 			end
 		end
 		if #rows > MAX_LINES then
-			tip:AddLine(("%d more"):format(#rows - MAX_LINES), 0.6, 0.6, 0.6)
+			tip:AddLine(("%d More"):format(#rows - MAX_LINES), 0.6, 0.6, 0.6)
 		end
 		if #rows == 0 then
 			tip:AddLine("No creature loot listed. The fight may drop a chest instead.", 0.6, 0.6, 0.6, true)
 		elseif open > 0 then
-			tip:AddLine(("%d you can still attune"):format(open), 0.3, 1, 0.3)
+			tip:AddLine(("%d Still to Attune"):format(open), 0.3, 1, 0.3)
 		end
 	else
 		tip:AddLine("The loot database hasn't loaded yet.", 0.6, 0.6, 0.6)

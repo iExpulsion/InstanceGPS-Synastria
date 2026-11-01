@@ -43,7 +43,7 @@ MOCK.Fire("ADDON_LOADED", "InstanceGPS")
 local t = Hover(1)
 print("10N base loot:", Has(t, "Item101") and Has(t, "Item102") and not Has(t, "Item201") and not Has(t, "Item301"))
 -- an already attuned item isn't marked
-print("attuned not marked:", not Has(t, "Item101|r | |cff33ff33attune"))
+print("attuned not marked:", not Has(t, "Item101|r | |cff33ff33Attune"))
 
 -- 25-player normal and heroic: their own versions
 print("25N version:", Has(Hover(2), "Item111"))
@@ -52,13 +52,13 @@ print("25H version:", Has(t, "Item121") and not Has(t, "Item101"))
 -- attunable first, then by chance
 local first = t:find("Item122", 1, true)
 print("attunable first:", first ~= nil and first < t:find("Item123", 1, true) and t:find("Item123", 1, true) < t:find("Item121", 1, true)
-	and Has(t, "1 you can still attune"))
--- one already in the bags reads "have", not "attune", and isn't counted
+	and Has(t, "1 Still to Attune"))
+-- one already in the bags reads "Have", not "Attune", and isn't counted
 owned[122] = true
 t = Hover(4)
 owned[122] = nil
-print("have not counted:", Has(t, "Item122|r | |cff888888have") and not Has(t, "Item122|r | |cff33ff33attune")
-	and not Has(t, "you can still attune"))
+print("have not counted:", Has(t, "Item122|r | |cff888888Have") and not Has(t, "Item122|r | |cff33ff33Attune")
+	and not Has(t, "Still to Attune"))
 
 -- 10-player heroic with no loot on its version: the normal 10-player loot
 print("10H falls back:", Has(Hover(3), "Item101"))
