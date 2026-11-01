@@ -40,6 +40,7 @@ EPIC = 4          # item quality: a creature that drops one is boss-like, not an
 # Leads already checked in game, left out of the report: creature ID -> what it turned out to be
 CHECKED = {
     80020: "Lord Jaraxxus: a player's summoned guardian, not a boss (Naxxramas, 2026-11-01)",
+    28921: "Hadronox: InstanceGPS's position is right (Azjol-Nerub heroic, 2026-11-01)",
 }
 
 
@@ -120,7 +121,7 @@ def main():
                 boss_npcs.update(int(creatures[n][k]) for k in ("difficulty_entry_1", "difficulty_entry_2",
                                  "difficulty_entry_3") if n in creatures and creatures[n][k])
             x, y = (o.x, o.y) if o and o.x is not None else (b.x, b.y)
-            if x is None:
+            if x is None or any(n in CHECKED for n in npcs):
                 continue
             here = [(sx, sy) for n in npcs for (m, sx, sy) in spawns.get(n, []) if m == mid]
             walked = here + [p for n in npcs for i, (m, _, _) in enumerate(spawns.get(n, [])) if m == mid
