@@ -76,4 +76,29 @@ print("no loot note:", Has(Hover(1), "No Creature Loot"))
 -- before the database has loaded
 loaded = false
 print("not loaded:", Has(Hover(1), "hasn't loaded yet"))
+-- The Boss Loot List option, on 25H: 124 isn't attunable, 121 is but is attuned, 123 is in the
+-- bags, 122 is still to farm
+LOOT[37959][4] = { 0, 124, 10 }
+loaded, attunable[121], attunable[123], attuned[121], owned[123] = true, true, true, true, true
+boss = { name = "Lord Marrowgar", npcs = { 36612 } }
+local function Listed(mode)
+	DN.db.modules = { Synastria = { lootList = mode } }
+	local text = Hover(4)
+	local got = {}
+	for _, id in ipairs({ 121, 122, 123, 124 }) do
+		if Has(text, "Item" .. id .. "|r") then got[#got + 1] = id end
+	end
+	return table.concat(got, ","), text
+end
+print("show all:", (Listed("all")) == "121,122,123,124")
+print("show attunable:", (Listed("attunable")) == "121,122,123")
+print("hide attuned:", (Listed("unattuned")) == "122,123")
+local farm, text = Listed("farm")
+print("hide owned attunes:", farm == "122" and Has(text, "1 Still to Attune"))
+attunable[122] = nil
+print("nothing to show:", Has(select(2, Listed("farm")), "Nothing to Show"))
+-- Boss Loot in Tooltips off: no loot lines at all
+DN.db.modules = { Synastria = { bossLoot = false } }
+print("loot off:", Hover(4) == "")
+DN.db.modules = nil
 print("loot test done")

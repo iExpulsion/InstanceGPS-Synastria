@@ -66,6 +66,16 @@ t = table.concat(lines, "\n")
 print("trash row:", trash ~= nil and Has(trash.right, "2") and Has(t, "Deathbound Ward | 1") and Has(t, "Item502|r | 5.0%")
 	and Has(t, "Frostwarden Handler") and not Has(t, "World Mob") and not Has(t, "Lord Marrowgar"))
 
+-- each row has an option of its own, which takes effect straight away
+DN.db.modules = { Synastria = { attuneRow = false } }
+DN:Fire("MODULE_OPTION", "Synastria", "attuneRow", false)
+local attuneOff = Note() == nil and DN.trackerNotes["attune trash"] ~= nil
+DN.db.modules = { Synastria = { trashRow = false } }
+DN:Fire("MODULE_OPTION", "Synastria", "trashRow", false)
+print("row options:", attuneOff and Note() ~= nil and DN.trackerNotes["attune trash"] == nil)
+DN.db.modules = nil
+DN:Fire("MODULE_OPTION", "Synastria", "trashRow", true)
+
 -- picking up a drop takes it off both rows within a second, like Synastria's own tracker
 owned[502] = true
 MOCK.Fire("BAG_UPDATE", 0)

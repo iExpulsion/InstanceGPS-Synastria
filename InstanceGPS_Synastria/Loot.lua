@@ -18,9 +18,12 @@ local function LootLoaded()
 	return ItemLocGetObjCount ~= nil and ItemLocIsLoaded ~= nil and ItemLocIsLoaded() ~= nil
 end
 
-local function CanStillAttune(item)
+local function Attunable(item)
 	return CanAttuneItemHelper ~= nil and (CanAttuneItemHelper(item) or 0) > 0
-		and not (HasAttunedAnyVariantOfItem and HasAttunedAnyVariantOfItem(item))
+end
+
+local function CanStillAttune(item)
+	return Attunable(item) and not (HasAttunedAnyVariantOfItem and HasAttunedAnyVariantOfItem(item))
 end
 
 -- in the bags or bank already: still to attune, but nothing left to farm (Synastria's own
@@ -79,8 +82,9 @@ local function BossLoot(boss, mythic)
 	end
 	local rows = {}
 	for _, item in ipairs(order) do
-		local can, have = CanStillAttune(item), Have(item)
-		rows[#rows + 1] = { item = item, chance = best[item], attune = can and not have, have = can and have }
+		local attunable, can, have = Attunable(item), CanStillAttune(item), Have(item)
+		rows[#rows + 1] = { item = item, chance = best[item], attunable = attunable,
+		                    attune = can and not have, have = can and have }
 	end
 	table.sort(rows, function(a, b)
 		if a.attune ~= b.attune then return a.attune end
@@ -99,15 +103,26 @@ local function ChanceText(chance)
 	return chance >= 100.5 and "" or chance >= 10 and ("%.0f%%"):format(chance) or ("%.1f%%"):format(chance)
 end
 
-DN:On("BOSS_TOOLTIP", function(boss, tip)
+-- the Boss Loot List option: which drops a boss's tooltip lists
+local LIST = {
+	all = function() return true end,
+	attunable = function(r) return r.attunable end,
+	unattuned = function(r) return r.attune or r.have end,
+	farm = function(r) return r.attune end,
+}
+
+local function ShowLoot(boss, tip)
 	local mythic = InMythic()
 	tip:AddLine(" ")
 	tip:AddDoubleLine(mythic and "Mythic Loot" or "Loot", boss.name, 1, 0.82, 0, 0.6, 0.6, 0.6)
 	if LootLoaded() then
-		local rows = BossLoot(boss, mythic)
-		local open = 0
-		for i, r in ipairs(rows) do
+		local all, rows, open = BossLoot(boss, mythic), {}, 0
+		local keep = LIST[ns.opt.lootList] or LIST.all
+		for _, r in ipairs(all) do
 			if r.attune then open = open + 1 end
+			if keep(r) then rows[#rows + 1] = r end
+		end
+		for i, r in ipairs(rows) do
 			if i <= MAX_LINES then
 				local right = ChanceText(r.chance)
 				if r.attune then right = "|cff33ff33Attune|r  " .. right end
@@ -118,14 +133,21 @@ DN:On("BOSS_TOOLTIP", function(boss, tip)
 		if #rows > MAX_LINES then
 			tip:AddLine(("%d More"):format(#rows - MAX_LINES), 0.6, 0.6, 0.6)
 		end
-		if #rows == 0 then
+		if #all == 0 then
 			tip:AddLine("No Creature Loot", 0.6, 0.6, 0.6)
-		elseif open > 0 then
+		elseif #rows == 0 then
+			tip:AddLine("Nothing to Show", 0.6, 0.6, 0.6)
+		end
+		if open > 0 then
 			tip:AddLine(("%d Still to Attune"):format(open), 0.3, 1, 0.3)
 		end
 	else
 		tip:AddLine("The loot database hasn't loaded yet.", 0.6, 0.6, 0.6)
 	end
+end
+
+DN:On("BOSS_TOOLTIP", function(boss, tip)
+	if ns.opt.bossLoot then ShowLoot(boss, tip) end
 end)
 
 -- the loot database is refreshed by the server (patches, Mythic changes): look it up again per instance

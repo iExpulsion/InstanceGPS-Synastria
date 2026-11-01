@@ -15,6 +15,14 @@ Synastria's changes for [InstanceGPS](https://github.com/iExpulsion/InstanceGPS)
 - **Trash worth killing.** A "Trash Drops" row counts the trash mobs here that drop something your character can still attune. Hover it for each mob's items and drop chances, the mobs with the most first.
 
 Both rows find the items the way Synastria's own item tracker does, with its filter settings, so their count matches the tracker's. `/igpssyn` prints what they're counting, boss by boss.
+
+### Options
+
+Under InstanceGPS in the game's options window, the Synastria page has:
+
+- **Boss Loot in Tooltips:** the loot list in boss tooltips (on).
+- **Boss Loot List:** which drops it lists: Show All (the default), Show Attunable (items your character can attune), Hide Attuned (only ones you haven't attuned yet) or Hide Owned Attunes (only what's left to farm, leaving out ones in your bags or bank).
+- **Left to Attune Row** and **Trash Drops Row:** the two rows under the boss list (on).
 - **Routes:** nothing yet. As far as we know, InstanceGPS's AzerothCore routes fit Synastria as they are. If you find a place where they don't, see below.
 
 ## Contributing

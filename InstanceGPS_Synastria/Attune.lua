@@ -205,12 +205,14 @@ local function Update()
 	if inst and items and #items > 0 then
 		local open = Open()
 		local _, trash = Groups(inst, open)
-		note = {
-			text = "|cffaaaaaa" .. (ns.InMythic() and "Left to Attune (Mythic)" or "Left to Attune") .. "|r",
-			right = #open > 0 and ("|cff33ff33%d|r"):format(#open) or "|cff888888None|r",
-			tooltip = Tooltip,
-		}
-		if #trash > 0 then
+		if ns.opt.attuneRow then
+			note = {
+				text = "|cffaaaaaa" .. (ns.InMythic() and "Left to Attune (Mythic)" or "Left to Attune") .. "|r",
+				right = #open > 0 and ("|cff33ff33%d|r"):format(#open) or "|cff888888None|r",
+				tooltip = Tooltip,
+			}
+		end
+		if #trash > 0 and ns.opt.trashRow then
 			trashNote = {
 				text = "|cffaaaaaaTrash Drops|r",
 				right = ("|cff33ff33%d|r %s"):format(#trash, #trash == 1 and "Mob" or "Mobs"),
@@ -259,6 +261,9 @@ DN:On("INSTANCE_CHANGED", function()
 	DN:SetTrackerNote(TRASH_NOTE, nil)
 end)
 DN:On("BOSS_KILLED", Update)
+DN:On("MODULE_OPTION", function(module)
+	if module == "Synastria" then Update() end
+end)
 
 -- a drop picked up is no longer to farm: recount within a second
 f:RegisterEvent("BAG_UPDATE")
