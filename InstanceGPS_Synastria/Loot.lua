@@ -14,6 +14,15 @@ local function InMythic()
 	return GetCustomGameData ~= nil and (GetCustomGameData(12, 11) or 0) >= 10
 end
 
+local function LootLoaded()
+	return ItemLocGetObjCount ~= nil and ItemLocIsLoaded ~= nil and ItemLocIsLoaded() ~= nil
+end
+
+local function CanStillAttune(item)
+	return CanAttuneItemHelper ~= nil and (CanAttuneItemHelper(item) or 0) > 0
+		and not (HasAttunedAnyVariantOfItem and HasAttunedAnyVariantOfItem(item))
+end
+
 local function LootCount(id)
 	return ItemLocGetObjCount(0, id) or 0
 end
@@ -64,9 +73,7 @@ local function BossLoot(boss, mythic)
 	end
 	local rows = {}
 	for _, item in ipairs(order) do
-		local attune = CanAttuneItemHelper and (CanAttuneItemHelper(item) or 0) > 0
-			and not (HasAttunedAnyVariantOfItem and HasAttunedAnyVariantOfItem(item))
-		rows[#rows + 1] = { item = item, chance = best[item], attune = attune and true or false }
+		rows[#rows + 1] = { item = item, chance = best[item], attune = CanStillAttune(item) }
 	end
 	table.sort(rows, function(a, b)
 		if a.attune ~= b.attune then return a.attune end
@@ -89,8 +96,7 @@ DN:On("BOSS_TOOLTIP", function(boss, tip)
 	local mythic = InMythic()
 	tip:AddLine(" ")
 	tip:AddDoubleLine(mythic and "Mythic Loot" or "Loot", boss.name, 1, 0.82, 0, 0.6, 0.6, 0.6)
-	local loaded = ItemLocGetObjCount and ItemLocIsLoaded and ItemLocIsLoaded() ~= nil
-	if loaded then
+	if LootLoaded() then
 		local rows = BossLoot(boss, mythic)
 		local open = 0
 		for i, r in ipairs(rows) do
@@ -116,3 +122,5 @@ end)
 
 -- the loot database is refreshed by the server (patches, Mythic changes): look it up again per instance
 DN:On("INSTANCE_CHANGED", function() cache = {} end)
+
+ns.InMythic, ns.LootLoaded, ns.CanStillAttune, ns.ItemText = InMythic, LootLoaded, CanStillAttune, ItemText

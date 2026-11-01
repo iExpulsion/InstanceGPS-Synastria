@@ -8,3 +8,4 @@
 Overrides.lua
 Difficulties.lua
 Loot.lua
+Attune.lua
