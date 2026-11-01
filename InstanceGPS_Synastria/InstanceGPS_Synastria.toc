@@ -2,7 +2,7 @@
 ## Title: InstanceGPS: Synastria
 ## Notes: Synastria's changes to InstanceGPS's AzerothCore data, and each boss's loot in its tooltip.
 ## Author: Expulsion
-## Version: 1.0.0
+## Version: 1.0.1
 ## Dependencies: InstanceGPS
 
 Overrides.lua

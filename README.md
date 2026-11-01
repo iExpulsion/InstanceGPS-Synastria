@@ -4,7 +4,7 @@ Synastria's changes for [InstanceGPS](https://github.com/iExpulsion/InstanceGPS)
 
 ## Installing
 
-1. Install [InstanceGPS](https://github.com/iExpulsion/InstanceGPS/releases/latest) first.
+1. Install [InstanceGPS](https://github.com/iExpulsion/InstanceGPS/releases/latest) 1.1.0 or later first.
 2. Download `InstanceGPS_Synastria-<version>.zip` from the [latest release](../../releases/latest) and extract it into `World of Warcraft\Interface\AddOns`, next to the `InstanceGPS` folder.
 3. Restart the game. The InstanceGPS options panel title reads "InstanceGPS ... + Synastria".
 
