@@ -45,6 +45,17 @@ local function OtherFlag(v)
 		+ (Flag(v, 0x20) and 8 or 0) + (Flag(v, 0x10) and 0x10 or 0)
 end
 
+-- An item's best source, as the Item Hunt tracker reads it: a source the server replaces with
+-- the quest that leads to it counts as that quest
+local function Compacted(item, ...)
+	local src, objType, objId, name, chance, replaced = ItemLocGetSourcesCompacted(item, ...)
+	if replaced then
+		src, objType, objId = 2, 2, replaced[1]
+		name = Custom_GetQuestName and Custom_GetQuestName(objId)
+	end
+	return src, objType, objId, name, chance
+end
+
 -- The way Synastria's own Item Hunt tracker lists a zone: every item this character can still
 -- attune, kept where its best source (with the tracker's filters) is in this zone.
 local function FetchLikeTracker(z)
@@ -58,7 +69,7 @@ local function FetchLikeTracker(z)
 		Custom_CacheHaveItems()
 	end
 	for _, item in ipairs(ItemLocGetAllItemsInZone(nil, 1, nil, nil, nil, -1, Var(29), boe) or {}) do
-		local src, objType, objId, name, chance = ItemLocGetSourcesCompacted(item, Var(6), Var(16), minChance, maxChance, other, z, 2)
+		local src, objType, objId, name, chance = Compacted(item, Var(6), Var(16), minChance, maxChance, other, z, 2)
 		if src then
 			list[#list + 1] = item
 			cache[item] = { objType = objType, objId = objId, name = name, chance = chance }
@@ -102,8 +113,8 @@ local function BossesByNpc(inst)
 	local by = {}
 	for _, b in ipairs(inst.bosses) do
 		for _, npc in ipairs(b.npcs or {}) do
-			by[npc] = b
-			for _, v in pairs(ns.DifficultyEntries[npc] or {}) do by[v] = b end
+			by[npc], by[ns.LootId(npc)] = b, b
+			for _, v in pairs(ns.DifficultyEntries[npc] or {}) do by[v], by[ns.LootId(v)] = b, b end
 		end
 	end
 	return by
@@ -121,7 +132,7 @@ local function Source(item, byNpc)
 	if not cache[item] then
 		local s = {}
 		if ItemLocGetSourcesCompacted then
-			local _, objType, objId, name, chance = ItemLocGetSourcesCompacted(item, 0, 0, 0, 100, 0, zone, 2)
+			local _, objType, objId, name, chance = Compacted(item, 0, 0, 0, 100, 0, zone, 2)
 			s = { objType = objType, objId = objId, name = name, chance = chance }
 		else
 			local here = DN.inst and DN.inst.name:lower()
@@ -291,6 +302,7 @@ DN:On("INSTANCE_CHANGED", function()
 	DN:SetTrackerNote(TRASH_NOTE, nil)
 	DN:SetBossMarks(NOTE, nil)
 end)
+DN:On("SYNASTRIA_READY", function() wait = 0 end)
 -- kills, and kills undone by hand (right-click), change which bosses get a mark
 DN:On("RUN_CHANGED", Update)
 DN:On("MODULE_OPTION", function(module)

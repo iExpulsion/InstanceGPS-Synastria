@@ -10,7 +10,7 @@ local LOOT = {
 	[37959] = { { 0, 121, 20 }, { 0, 122, 25 }, { 0, 123, 100 } },
 }
 local loaded, mythicLevel, attunable, attuned = true, 0, { [122] = true, [101] = true }, { [101] = true }
-function ItemLocIsLoaded() return loaded or nil end
+function ItemLocIsLoaded() return loaded and 14 or 0 end
 function ItemLocGetObjCount(_, id) return LOOT[id] and #LOOT[id] or 0 end
 function ItemLocSetObjSort() end
 function ItemLocGetObjAt(_, id, i) local r = LOOT[id][i] return r[1], r[2], r[3], r[3] * 10 end
@@ -38,6 +38,10 @@ end
 local function Has(text, s) return text:find(s, 1, true) ~= nil end
 
 MOCK.Fire("ADDON_LOADED", "InstanceGPS")
+
+-- without the server's ready call (other setups) the module is ready at once, and still offers the call
+print("ready without the server call:", type(InstanceGPSSynastria_OnReady) == "function"
+	and Has(Hover(1), "Item101"))
 
 -- 10-player normal: the base creature's drops, without skinning or Mythic-only rows
 local t = Hover(1)
@@ -73,7 +77,14 @@ mythicLevel = 0
 boss = { name = "Chest Boss", npcs = { 99999 } }
 print("no loot note:", Has(Hover(1), "No Creature Loot"))
 
--- before the database has loaded
+-- a creature the loot database keeps under another ID is looked up by that one, as the server's
+-- own loot tooltip does
+function ItemLocFixupObjId(objType, id) return objType == 0 and id == 36613 and 36612 or id end
+boss = { name = "Lord Marrowgar", npcs = { 36613 } }
+print("fixed-up creature:", Has(Hover(1), "Item101"))
+ItemLocFixupObjId = nil
+
+-- before the database has loaded (the server reports 0)
 loaded = false
 print("not loaded:", Has(Hover(1), "hasn't loaded yet"))
 -- The Boss Loot List option, on 25H: 124 isn't attunable, 121 is but is attuned, 123 is in the

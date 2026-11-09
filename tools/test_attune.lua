@@ -17,7 +17,7 @@ local SOURCES = {
 	[777] = { { 0, 0, 36612, 20, 200, "Lord Marrowgar", HERE } },
 }
 local loaded, attuned, fetches = false, { [503] = true }, {}
-function ItemLocIsLoaded() return loaded or nil end
+function ItemLocIsLoaded() return loaded and 14 or 0 end
 function ItemLocGetObjCount() return 0 end
 function ItemLocGetAllItemsInZone(z) fetches[#fetches + 1] = z return ZONES[z] end
 function ItemLocGetSourceCount(item) return SOURCES[item] and #SOURCES[item] or 0 end
@@ -48,6 +48,15 @@ MOCK.Tick(1.2)
 print("waits for the database:", DN.inst == inst and Note() == nil and #fetches == 0)
 loaded = true
 MOCK.Tick(1.2)
+-- the module asked the server for its ready call at load, and waits for it even with the data loaded
+print("waits for the ready call:", SAFE_INVOKED[1] == "InstanceGPSSynastria_OnReady" and Note() == nil and #fetches == 0)
+lines = {}
+DN:Fire("BOSS_TOOLTIP", { name = "Lord Marrowgar", npcs = { 36612 } }, tip)
+print("tooltip waits too:", Has(table.concat(lines, "\n"), "hasn't loaded yet"))
+lines = {}
+-- the ready call counts straight away, without waiting for the next retry
+_G[SAFE_INVOKED[1]]()
+MOCK.Tick(0.01)
 local n = Note()
 print("25H zone built from the difficulty:", fetches[1] == ICC + 0x8000 + 8 * 1024 and #fetches == 1)
 print("row counts what's left:", n ~= nil and Has(n.text, "Left to Attune") and Has(n.right, "3"))
@@ -186,4 +195,27 @@ DN:Fire("INSTANCE_CHANGED", inst)
 MOCK.Tick(0.2)
 print("horde and filters:", args.other == 0x1F)
 CustomGetRaceId = nil
+
+-- A source the server replaces with the quest that leads to it counts as that quest, as in its
+-- tracker: 601 (Marrowgar, replaced by quest 4321) goes under others, not the boss or the trash
+-- row; 602 stays a trash drop; 603 drops from Marrowgar under the ID the loot database keeps him by.
+function GetCustomGameData() return 0 end
+function ItemLocFixupObjId(objType, id) return objType == 0 and id == 36612 and 88888 or id end
+function Custom_GetQuestName(q) return q == 4321 and "The Lich King's Bones" or nil end
+function ItemLocGetSourcesCompacted(item)
+	if item == 601 then return 0, 0, 36612, "Lord Marrowgar", 20, { 4321 } end
+	if item == 602 then return 0, 0, 97, "Ancient Skeletal Soldier", 2 end
+	if item == 603 then return 0, 0, 88888, "Lord Marrowgar", 20 end
+end
+OWN = 33333
+DN:Fire("INSTANCE_CHANGED", inst)
+MOCK.Tick(0.2)
+lines = {}
+Note().tooltip(tip)
+t = table.concat(lines, "\n")
+print("replaced by a quest:", Has(Note().right, "3") and Has(t, "Lord Marrowgar | 1") and Has(t, "Trash, Chests and Others | 2")
+	and Has(DN.trackerNotes["attune trash"].right, "1"))
+-- the fixed-up ID still counts as the boss, with a mark after his name
+print("fixed-up boss:", DN.bossMarks.attune[marrowgar] ~= nil and DN.bossMarks.attune[marrowgar]:find("(1)", 1, true) ~= nil)
+ItemLocFixupObjId, Custom_GetQuestName = nil, nil
 print("attune test done")

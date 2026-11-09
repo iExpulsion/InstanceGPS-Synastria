@@ -10,12 +10,25 @@ local SKINNING, PICKPOCKET = 13, 14
 
 local cache = {}
 
+-- Synastria's data and its own functions are ready at different times after a login or a
+-- reload; the server calls this once both are
+local ready = SynastriaSafeInvoke == nil
+
+function InstanceGPSSynastria_OnReady()
+	ready, cache = true, {}
+	DN:Fire("SYNASTRIA_READY")
+end
+
+if SynastriaSafeInvoke then
+	SynastriaSafeInvoke("InstanceGPSSynastria_OnReady")
+end
+
 local function InMythic()
 	return GetCustomGameData ~= nil and (GetCustomGameData(12, 11) or 0) >= 10
 end
 
 local function LootLoaded()
-	return ItemLocGetObjCount ~= nil and ItemLocIsLoaded ~= nil and ItemLocIsLoaded() ~= nil
+	return ready and ItemLocGetObjCount ~= nil and ItemLocIsLoaded ~= nil and (ItemLocIsLoaded() or 0) > 0
 end
 
 local function Attunable(item)
@@ -32,8 +45,13 @@ local function Have(item)
 	return GetItemCount ~= nil and (GetItemCount(item, true) or 0) > 0
 end
 
+-- the creature the loot database keeps this creature's drops under
+local function LootId(id)
+	return ItemLocFixupObjId and ItemLocFixupObjId(0, id) or id
+end
+
 local function LootCount(id)
-	return ItemLocGetObjCount(0, id) or 0
+	return ItemLocGetObjCount(0, LootId(id)) or 0
 end
 
 -- The creature whose loot applies here. The heroic and 25-player drops sit on the difficulty
@@ -57,7 +75,8 @@ local function CreatureLoot(id, mythic)
 	local list = cache[key]
 	if not list then
 		list = {}
-		local n = LootCount(id)
+		id = LootId(id)
+		local n = ItemLocGetObjCount(0, id) or 0
 		if n > 0 then
 			ItemLocSetObjSort(0, id, 2)
 			for i = 1, n do
@@ -153,5 +172,5 @@ end)
 -- the loot database is refreshed by the server (patches, Mythic changes): look it up again per instance
 DN:On("INSTANCE_CHANGED", function() cache = {} end)
 
-ns.InMythic, ns.LootLoaded, ns.CanStillAttune, ns.Have, ns.ItemText, ns.ChanceText =
-	InMythic, LootLoaded, CanStillAttune, Have, ItemText, ChanceText
+ns.InMythic, ns.LootLoaded, ns.LootId, ns.CanStillAttune, ns.Have, ns.ItemText, ns.ChanceText =
+	InMythic, LootLoaded, LootId, CanStillAttune, Have, ItemText, ChanceText

@@ -11,7 +11,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ADDON = glob.glob(os.path.join(ROOT, "InstanceGPS_*"))[0]
 BASE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "..", "InstanceGPS")
 HARNESS = os.path.join(BASE, "test", "run_test.py")
-TESTS = [("test_loot.lua", "loot test done"), ("test_attune.lua", "attune test done")]
+MOCK_READY = os.path.join(ROOT, "tools", "mock_ready.lua")
+TESTS = [("test_loot.lua", "loot test done", ""), ("test_attune.lua", "attune test done", MOCK_READY)]
 
 if not os.path.exists(HARNESS):
     sys.exit("InstanceGPS's test harness not found (%s)" % HARNESS)
@@ -19,10 +20,11 @@ if not os.path.exists(HARNESS):
 toc = open(glob.glob(os.path.join(ADDON, "*.toc"))[0], encoding="utf8").read().splitlines()
 modules = os.pathsep.join(os.path.join(ADDON, l.strip()) for l in toc if l.strip() and not l.startswith("#"))
 failed = False
-for test, done in TESTS + [("test_bosses.py", "bosses test done")]:
+for test, done, before in TESTS + [("test_bosses.py", "bosses test done", "")]:
     path = os.path.join(ROOT, "tools", test)
     args = [path] if test.endswith(".py") else [HARNESS, "", path]
-    p = subprocess.run([sys.executable] + args, capture_output=True, text=True, env=dict(os.environ, DN_MODULES=modules))
+    env = dict(os.environ, DN_MODULES=modules, DN_BEFORE=before)
+    p = subprocess.run([sys.executable] + args, capture_output=True, text=True, env=env)
     out = p.stdout + p.stderr
     results = [l for l in out.splitlines() if l.endswith(("\ttrue", "\tfalse"))]
     for l in results:
