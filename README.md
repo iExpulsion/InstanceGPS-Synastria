@@ -18,7 +18,7 @@ Both rows find the items the way Synastria's own item tracker does, with its fil
 
 ### Options
 
-Under InstanceGPS in the game's options window, the Synastria page has:
+In InstanceGPS's options window (`/igps options`), the Synastria page under Modules has:
 
 - **Boss Loot in Tooltips:** the loot list in boss tooltips (on).
 - **Boss Loot List:** which drops it lists: Show All (the default), Show Attunable (items your character can attune), Hide Attuned (only ones you haven't attuned yet) or Hide Owned Attunes (only what's left to farm, leaving out ones in your bags or bank).
