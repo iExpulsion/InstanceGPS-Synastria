@@ -27,15 +27,38 @@ local function ChanceLimit(byte, unset)
 	return byte == 0 and unset or v >= 0x80 and (v - 0x80) * 0.01 or v
 end
 
+local function Flag(v, bit)
+	return math.floor(v / bit) % 2 == 1
+end
+
+local ALLIANCE_RACES = { [1] = true, [3] = true, [4] = true, [7] = true, [11] = true }
+
+local function IsHorde()
+	local race = CustomGetRaceId and CustomGetRaceId()
+	return race and not ALLIANCE_RACES[race] or not race and UnitFactionGroup("player") == "Horde"
+end
+
+-- The tracker's other source filters: hide accepted quests (1), hide wrong faction (2), Horde (4),
+-- and two more of its settings (8, 0x10)
+local function OtherFlag(v)
+	return (Flag(v, 0x2000) and 1 or 0) + (Flag(v, 0x4000) and 2 or 0) + (IsHorde() and 4 or 0)
+		+ (Flag(v, 0x20) and 8 or 0) + (Flag(v, 0x10) and 0x10 or 0)
+end
+
 -- The way Synastria's own Item Hunt tracker lists a zone: every item this character can still
 -- attune, kept where its best source (with the tracker's filters) is in this zone.
 local function FetchLikeTracker(z)
 	local chances = Var(27)
 	local minChance, maxChance = ChanceLimit(chances % 256, 0), ChanceLimit(math.floor(chances / 256) % 256, 100)
-	local boe = math.floor(Var(4) / 0x10000) % 2 == 1 and 1 or nil
+	local settings = Var(4)
+	local boe = Flag(settings, 0x10000) and 1 or nil
+	local other = OtherFlag(settings)
 	local list, cache = {}, {}
+	if Custom_CacheHaveItems then
+		Custom_CacheHaveItems()
+	end
 	for _, item in ipairs(ItemLocGetAllItemsInZone(nil, 1, nil, nil, nil, -1, Var(29), boe) or {}) do
-		local src, objType, objId, name, chance = ItemLocGetSourcesCompacted(item, Var(6), Var(16), minChance, maxChance, 0, z, 2)
+		local src, objType, objId, name, chance = ItemLocGetSourcesCompacted(item, Var(6), Var(16), minChance, maxChance, other, z, 2)
 		if src then
 			list[#list + 1] = item
 			cache[item] = { objType = objType, objId = objId, name = name, chance = chance }

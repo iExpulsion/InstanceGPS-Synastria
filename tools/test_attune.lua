@@ -122,8 +122,11 @@ function ItemLocGetAllItemsInZone(z, char, _, _, _, have)
 	fetches[#fetches + 1] = z or "all"
 	return z == nil and char == 1 and have == -1 and { 601, 602, 603 } or ZONES[z]
 end
-function ItemLocGetSourcesCompacted(item, white, _, minChance, maxChance, _, z)
-	args = { white = white, minChance = minChance, maxChance = maxChance, zone = z }
+local cachedHave = 0
+function Custom_CacheHaveItems() cachedHave = cachedHave + 1 end
+function UnitFactionGroup() return "Alliance" end
+function ItemLocGetSourcesCompacted(item, white, _, minChance, maxChance, other, z)
+	args = { white = white, minChance = minChance, maxChance = maxChance, other = other, zone = z }
 	local s = z == OWN and TRACKER[item]
 	if s then return 0, s[1], s[3], s[4], s[5] end
 end
@@ -135,6 +138,8 @@ local trash = DN.trackerNotes["attune trash"]
 print("tracker's way:", fetches[#fetches] == "all" and n ~= nil and Has(n.right, "2") and trash ~= nil and Has(trash.right, "1"))
 -- its filters come from the tracker's settings: source types, and chance limits (1-2%)
 print("tracker's filters:", args.white == 7 and args.minChance == 0 and args.maxChance == 1 and args.zone == OWN)
+-- like the tracker, it refreshes the bag cache first and passes its other filters (none set, Alliance)
+print("tracker's other flag:", args.other == 0 and cachedHave == 1)
 lines = {}
 n.tooltip(tip)
 t = table.concat(lines, "\n")
@@ -169,4 +174,16 @@ DN.Print = print_
 local report = table.concat(said, "\n")
 print("slash report:", Has(report, "12345") and Has(report, "2 left to attune") and Has(report, "Lord Marrowgar: 1")
 	and Has(report, "from 1 trash mobs"))
+
+-- a Horde character (by Synastria's race ID) with hide accepted quests, hide wrong faction and
+-- both other settings on gets every bit, as the tracker builds it
+function CustomGetRaceId() return 2 end
+function GetCustomGameData(a, b)
+	return a == 37 and b == 0x10000 + 4 and (0x2000 + 0x4000 + 0x20 + 0x10) or 0
+end
+OWN = 22222
+DN:Fire("INSTANCE_CHANGED", inst)
+MOCK.Tick(0.2)
+print("horde and filters:", args.other == 0x1F)
+CustomGetRaceId = nil
 print("attune test done")
