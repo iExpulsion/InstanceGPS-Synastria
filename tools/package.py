@@ -1,7 +1,7 @@
 """Zip the module for release: python tools/package.py [output folder]
 
 Writes <output>/InstanceGPS_Synastria-<version>.zip with a top-level InstanceGPS_Synastria/ folder
-(extract it into Interface/AddOns): the .toc, the files it loads, the README and the LICENSE.
+(extract it into Interface/AddOns): the .toc and the files it loads. The license note is in the repo README.
 """
 import glob, os, re, sys, zipfile
 
@@ -21,6 +21,4 @@ out = os.path.abspath(os.path.join(DIST, "%s-%s.zip" % (NAME, version)))
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for f in files:
         z.write(os.path.join(ADDON, f), NAME + "/" + f)
-    for f in ("README.md", "LICENSE"):
-        z.write(os.path.join(ROOT, f), NAME + "/" + f)
-print("%s  (%d files)" % (out, len(files) + 2))
+print("%s  (%d files)" % (out, len(files)))
