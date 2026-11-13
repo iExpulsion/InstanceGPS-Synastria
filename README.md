@@ -46,6 +46,6 @@ Routes for moved or added bosses can be worked out properly (instead of the roug
 
 ## License
 
-GPL-2.0, like InstanceGPS. See [LICENSE](LICENSE).
+GPL-2.0 or later, like InstanceGPS. See [LICENSE](LICENSE).
 
 Made by Expulsion.
