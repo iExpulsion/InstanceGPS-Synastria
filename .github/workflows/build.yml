@@ -67,4 +67,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.check.outputs.version }}
-        run: gh release create "v$VERSION" dist/*.zip --target "$GITHUB_SHA" --title "InstanceGPS: Synastria $VERSION" --generate-notes
+        run: |
+          gh release create "v$VERSION" dist/*.zip --target "$GITHUB_SHA" --title "InstanceGPS: Synastria $VERSION" --generate-notes
