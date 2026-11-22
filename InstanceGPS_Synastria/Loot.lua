@@ -14,9 +14,12 @@ local cache = {}
 -- reload; the server calls this once both are
 local ready = SynastriaSafeInvoke == nil
 
+-- this module's own files that wait for it (Attune.lua) add a function here: the module's event, kept off
+-- InstanceGPS's
+ns.onReady = {}
 function InstanceGPSSynastria_OnReady()
 	ready, cache = true, {}
-	DN:Fire("SYNASTRIA_READY")
+	for _, fn in ipairs(ns.onReady) do fn() end
 end
 
 if SynastriaSafeInvoke then

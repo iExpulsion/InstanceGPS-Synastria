@@ -302,7 +302,7 @@ DN:On("INSTANCE_CHANGED", function()
 	DN:SetTrackerNote(TRASH_NOTE, nil)
 	DN:SetBossMarks(NOTE, nil)
 end)
-DN:On("SYNASTRIA_READY", function() wait = 0 end)
+table.insert(ns.onReady, function() wait = 0 end)
 -- kills, and kills undone by hand (right-click), change which bosses get a mark
 DN:On("RUN_CHANGED", Update)
 DN:On("MODULE_OPTION", function(module)
